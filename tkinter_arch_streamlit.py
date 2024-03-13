@@ -6,6 +6,7 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from io import StringIO
+import contextlib
 
 def process_data_and_train_model(file, epochs):
     st.info("Loading and processing data...")
@@ -51,10 +52,9 @@ def process_data_and_train_model(file, epochs):
 
     # Save model architecture summary to txt file
     st.info("Saving model architecture summary...")
-    architecture_summary = StringIO()
-    model.summary(print_fn=lambda x: architecture_summary.write(x + '\n'))
     with open('architecture_summary.txt', 'w') as file:
-        file.write(architecture_summary.getvalue())
+        with contextlib.redirect_stdout(file):
+            model.summary()
 
     # Display training history
     st.subheader("Training History")
