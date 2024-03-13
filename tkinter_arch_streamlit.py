@@ -60,7 +60,10 @@ def process_data_and_train_model(file, epochs):
     st.subheader("Training History")
     st.line_chart(pd.DataFrame(history.history))
 
-    st.success("Model trained. Model architecture summary saved as 'architecture_summary.txt'.")
+    st.success("Model trained.")
+
+    # Display download button for architecture summary
+    st.download_button(label="Download Model Architecture Summary", data=open('architecture_summary.txt', 'rb').read(), file_name='architecture_summary.txt')
 
 def main():
     st.title("Future Application")
