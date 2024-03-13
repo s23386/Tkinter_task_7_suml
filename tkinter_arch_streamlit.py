@@ -1,101 +1,72 @@
-import tkinter as tk
-from tkinter import messagebox, filedialog
+import streamlit as st
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.callbacks import ModelCheckpoint
-from keras.optimizers import Adam
-from io import StringIO
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.optimizers import Adam
 
 def process_data_and_train_model(epochs):
-  messagebox.showinfo("Information", "Application launched. Loading and processing data...")
+    st.info("Application launched. Loading and processing data...")
 
-  # Load data
-  file_path = filedialog.askopenfilename(title="Select CSV file", filetypes=[("CSV files", "*.csv")])
-  if not file_path:
-    messagebox.showerror("Error", "No file selected.")
-    return
+    # Load data
+    uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
+    if uploaded_file is not None:
+        try:
+            df = pd.read_csv(uploaded_file)
+        except Exception as e:
+            st.error(f"Error loading CSV file: {e}")
+            return
 
-  try:
-    df = pd.read_csv(file_path)
-  except Exception as e:
-    messagebox.showerror("Error", f"Error loading CSV file: {e}")
-    return
+        # Handle missing values
+        df.fillna(df.mean(), inplace=True)
 
-  # Handle missing values
-  for col in df.columns:
-    if df[col].isnull().sum() > 0:
-      if pd.api.types.is_numeric_dtype(df[col]):
-        df[col].fillna(df[col].mean(), inplace=True)  # Replace with preferred method for numeric data
-      else:
-        # Handle non-numeric data (choose one approach)
-        # Option 1: Remove column (if not important)
-        # df.drop(col, axis=1, inplace=True)
+        # One-hot encode categorical variables
+        df = pd.get_dummies(df)
 
-        # Option 2: Fill with a constant value (e.g., 'NA')
-        df[col].fillna('NA', inplace=True)
+        # Split data into features and target
+        X = df.drop(columns=['Survived'])
+        y = df['Survived']
 
-        # Option 3: Implement a more sophisticated strategy (e.g., label encoding)
+        # Split data into train and test sets
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-  # One-hot encode categorical variables (replace with actual column names)
-  categorical_cols = ['Name', 'Sex', 'Ticket', 'Cabin', 'Embarked']  # Replace with your list of categorical columns
-  df = pd.get_dummies(df, columns=categorical_cols)
+        # Standardize features
+        scaler = StandardScaler()
+        X_train_scaled = scaler.fit_transform(X_train)
+        X_test_scaled = scaler.transform(X_test)
 
-  # Split data into features and target
-  X = df.drop(columns=['Survived'])
-  y = df['Survived']
+        # Build a simpler neural network
+        model = Sequential([
+            Dense(32, activation='relu', input_dim=X_train_scaled.shape[1]),
+            Dense(16, activation='relu'),
+            Dense(1, activation='sigmoid')
+        ])
 
-  # Split data into train and test sets
-  X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        # Compile model
+        optimizer = Adam(learning_rate=0.001)
+        model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
 
-  # Standardize features
-  scaler = StandardScaler()
-  X_train_scaled = scaler.fit_transform(X_train)
-  X_test_scaled = scaler.transform(X_test)
+        # Train model
+        st.info("Training model...")
+        history = model.fit(X_train_scaled, y_train, epochs=epochs, batch_size=32, validation_data=(X_test_scaled, y_test))
 
-  # Build a simpler neural network (adjust layers/neurons if needed)
-  model = Sequential([
-    Dense(32, activation='relu', input_dim=X_train_scaled.shape[1]),
-    Dense(16, activation='relu'),
-    Dense(1, activation='sigmoid')
-  ])
+        # Save model architecture summary to txt file
+        st.info("Saving model architecture summary...")
+        with open('architecture_summary.txt', 'w') as file:
+            model.summary(print_fn=lambda x: file.write(x + '\n'))
 
-  # Compile model
-  optimizer = Adam(learning_rate=0.001)  # Adjust learning rate if necessary
-  model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
+        # Display training history
+        st.subheader("Training History")
+        st.line_chart(pd.DataFrame(history.history))
 
-  # Train model
-  try:
-    model.fit(X_train_scaled, y_train, epochs=epochs, batch_size=32, validation_data=(X_test_scaled, y_test))
-  except Exception as e:
-    messagebox.showerror("Error", f"Error during training: {e}")
-    return
+        st.success("Model trained. Model architecture summary saved as 'architecture_summary.txt'.")
 
-  # Save information about the network architecture to a .txt file
-  with open('architecture_summary.txt', 'w') as file:
-    model.summary(print_fn=lambda x: file.write(x))  # Remove line_break argument
-
-  messagebox.showinfo("Information", "Model trained. Model architecture summary saved as 'architecture_summary.txt'.")
-
-def create_window():
-  window = tk.Tk()
-  window.title("Future Application")
-  
-  # Set icon for the window (replace with the correct path)
-  window.iconbitmap('/Users/smilan/Desktop/PJA/8th Semester/SUML/Task 7./icon.ico')
-
-  label = tk.Label(window, text="Enter number of epochs for training:")
-  label.pack(padx=20, pady=5)
-
-  entry = tk.Entry(window)
-  entry.pack(padx=20, pady=5)
-
-  button = tk.Button(window, text="Train Model", command=lambda: process_data_and_train_model(int(entry.get())))
-  button.pack(padx=20, pady=20)
-
-  window.mainloop()
+def main():
+    st.title("Future Application")
+    epochs = st.number_input("Enter number of epochs for training:", min_value=1, value=10)
+    if st.button("Train Model"):
+        process_data_and_train_model(epochs)
 
 if __name__ == "__main__":
-  create_window()
+    main()
