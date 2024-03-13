@@ -2,9 +2,9 @@ import streamlit as st
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
-from tensorflow.keras.optimizers import Adam
 
 def process_data_and_train_model(epochs):
     st.info("Application launched. Loading and processing data...")
@@ -44,7 +44,7 @@ def process_data_and_train_model(epochs):
         ])
 
         # Compile model
-        optimizer = Adam(learning_rate=0.001)
+        optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
         model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
 
         # Train model
