@@ -53,6 +53,7 @@ def process_data_and_train_model(file, epochs):
     # Save model architecture summary to txt file
     st.info("Saving model architecture summary...")
     with open('architecture_summary.txt', 'w') as file:
+        file.write(f"Number of epochs: {epochs}\n\n")
         with contextlib.redirect_stdout(file):
             model.summary()
 
