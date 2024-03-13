@@ -5,6 +5,7 @@ from sklearn.preprocessing import StandardScaler
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
+from io import StringIO
 
 def process_data_and_train_model(file, epochs):
     st.info("Loading and processing data...")
@@ -50,8 +51,10 @@ def process_data_and_train_model(file, epochs):
 
     # Save model architecture summary to txt file
     st.info("Saving model architecture summary...")
+    architecture_summary = StringIO()
+    model.summary(print_fn=lambda x: architecture_summary.write(x + '\n'))
     with open('architecture_summary.txt', 'w') as file:
-        model.summary(print_fn=lambda x: file.write(x + '\n'))
+        file.write(architecture_summary.getvalue())
 
     # Display training history
     st.subheader("Training History")
