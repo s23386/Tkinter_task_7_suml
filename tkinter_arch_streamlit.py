@@ -15,8 +15,8 @@ def process_data_and_train_model(file, epochs):
         st.error(f"Error loading CSV file: {e}")
         return
 
-    # Handle missing values
-    df.fillna(df.mean(), inplace=True)
+    # Drop rows with missing values
+    df.dropna(inplace=True)
 
     # One-hot encode categorical variables
     df = pd.get_dummies(df)
